@@ -4,9 +4,7 @@ import json
 from typing import List, Any
 from PIL import Image
 from tqdm import tqdm
-
 import argparse
-
 
 __author__ = "Ali Alizadeh"
 __email__ = 'aalizade@ford.com.tr / a.alizade@live.com'
