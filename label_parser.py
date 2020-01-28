@@ -52,23 +52,23 @@ def collect_bdd_labels(bdd_label_path):
 
 
 def sync_labels_imgs(label_path, img_path):
-    for path, subdirs, files in tqdm(os.walk(label_path)):
+    for path, subdirs, files in tqdm(os.walk(img_path)):
         for file in tqdm(files):
-            if file.lower().endswith('.txt'):
-                imape_folders_path = img_path + path.split('/')[-1]
-                image_path = os.path.join(imape_folders_path, file)
-                image_path = image_path.split('.')[0] + '.jpg'
+            if file.lower().endswith('jpg'):
+                image_folders_path = img_path + path.split('/')[-1]
+                image_path = os.path.join(image_folders_path, file)
+                image_path = image_path.split('.')[0] + '.txt'
                 if not os.path.isdir(image_path):
                     os.remove(image_path)
 
 
-def write_training_data_path_synced_with_labels(label_path):
+def write_training_data_path_synced_with_labels(img_path):
     with open('nuscenes_training_dataPath.txt', 'w') as train_data_path:
-        for path, subdirs, files in os.walk(label_path):
+        for path, subdirs, files in os.walk(img_path):
             for file in files:
-                if file.lower().endswith('txt'):
+                if file.lower().endswith('png'):
                     full_path = os.path.join(path, file)
-                    full_path = full_path.split('.')[0]+ '.jpg'
+                    full_path = full_path.split('.')[0]+ '.txt'
                     full_path = 'images/'+path.split('/')[-1]+'/'+full_path.split('/')[-1]
                     train_data_path.write(str(full_path) + os.linesep)
         train_data_path.close()
@@ -146,11 +146,11 @@ def yolo_parser(json_path, targat_path):
     list_file.close()
 
 
-def nuscenes_parser(label_path, targat_path, img_path):
+def nuscenes_parser(label_path, target_path, img_path):
     json_backup = "json_backup/"
     wd = getcwd()
 
-    sync_labels_imgs(label_path, img_path)
+
     """ Get input json file list """
     json_name_list = []
     for file in tqdm(os.listdir(label_path)):
@@ -167,7 +167,7 @@ def nuscenes_parser(label_path, targat_path, img_path):
 
             i: int
             for i in tqdm(range(len(unique_img_names))):
-                f = open(targat_path + unique_img_names[i].split('/')[1] + '/' + unique_img_names[i].split('/')[-1].split('.')[0] + '.txt', "w+")
+                f = open(target_path + unique_img_names[i].split('/')[1] + '/' + unique_img_names[i].split('/')[-1].split('.')[0] + '.txt', "w+")
                 for idx, name in enumerate(data):
                     if unique_img_names[i] == name['filename']:
                         x, y, w, h = convert((1600, 900), name['bbox_corners'])
@@ -197,6 +197,7 @@ def nuscenes_parser(label_path, targat_path, img_path):
                         L = L.join(temp)
                         f.writelines(L)
                 f.close()
+            sync_labels_imgs(target_path, img_path)
             n = open('nuscenes.names', "w+")
             n.write('pedestrian \n')
             n.write('bicycle \n')
@@ -210,7 +211,9 @@ def nuscenes_parser(label_path, targat_path, img_path):
             n.write('bicycle_rack \n')
             n.close()
 
-    write_training_data_path_synced_with_labels(label_path)
+        write_training_data_path_synced_with_labels(img_path)
+
+
 
 
 
@@ -224,7 +227,7 @@ if __name__ == '__main__':
         data = bdd_parser(args.label_dir)
 
     elif args.data_type == 'nuscenes':
-        data = bdd_parser(args.label_dir, args.save_dir, args.image_dir)
+        data = nuscenes_parser(args.label_dir, args.save_dir, args.image_dir)
 
     else:
         print(40 * '-')
